@@ -66,34 +66,42 @@ async def cmd_start(message: types.Message):
 
 @dp.message_handler(commands=["task"])
 async def task_handler(message: types.Message):
-    user_id = message.from_user.id
-    await send_task(user_id)
+    user_data = bot_db.get_user_data(user_id=message.from_user.id)
+    if user_data["status"] == 1:
+        user_id = message.from_user.id
+        await send_task(user_id)
 
 
 @dp.message_handler(commands=['top'])
 async def get_top_users(message: types.Message):
-    user_id = message.from_user.id
-    tops = bot_db.get_top_users()
-    m_text = "Топ пользователей"
-    for i, top in enumerate(tops):
-        m_text += f"\n {i+1}. {top['name']}: {top['score']}"
-    await send_message(user_id=user_id, text=m_text)
+    user_data = bot_db.get_user_data(user_id=message.from_user.id)
+    if user_data["status"] == 1:
+        user_id = message.from_user.id
+        tops = bot_db.get_top_users()
+        m_text = "Топ пользователей"
+        for i, top in enumerate(tops):
+            m_text += f"\n {i+1}. {top['name']}: {top['score']}"
+        await send_message(user_id=user_id, text=m_text)
 
 
 @dp.message_handler(commands=['delme'])
 async def del_user(message: types.Message):
     """Удалить информацию о пользователе по закону о ПД."""
-    user_id = message.from_user.id
-    log.info(f"Target [ID:{user_id}]: try to delete his personal info")
-    bot_db.delete_user(user_id=user_id)
+    user_data = bot_db.get_user_data(user_id=message.from_user.id)
+    if user_data["status"] == 1:
+        user_id = message.from_user.id
+        log.info(f"Target [ID:{user_id}]: try to delete his personal info")
+        bot_db.delete_user(user_id=user_id)
 
 
 @dp.message_handler(commands=['setname'])
 async def cmd_start(message: types.Message):
-    user_id = message.from_user.id
-    m_text = "Теперь отправьте боту ваше новое имя."
-    bot_db.change_user_status(user_id=user_id, new_status=0)
-    await send_message(user_id=user_id, text=m_text)
+    user_data = bot_db.get_user_data(user_id=message.from_user.id)
+    if user_data["status"] == 1:
+        user_id = message.from_user.id
+        m_text = "Теперь отправьте боту ваше новое имя."
+        bot_db.change_user_status(user_id=user_id, new_status=0)
+        await send_message(user_id=user_id, text=m_text)
 
 
 @dp.message_handler(content_types=ContentTypes.TEXT)
