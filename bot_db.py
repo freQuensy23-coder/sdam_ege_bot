@@ -73,7 +73,11 @@ class BotDB:
             s_p_list.append(task_id)
             solved_problems = repr(s_p_list)
 
-        add_point_q = f"""UPDATE users SET score = {score + cost}, solved_problems = '{solved_problems}'"""
+        add_point_q = f"""
+                        UPDATE users
+                        SET score = {score + cost}, solved_problems = '{solved_problems}'
+                        WHERE user_id = {user_id}
+                        """
         cur.execute(add_point_q)
         self.connection.commit()
         return score + cost
