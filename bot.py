@@ -1,8 +1,7 @@
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher, types
-from aiogram.utils import exceptions, executor
+from aiogram.utils import exceptions
 
 from aiogram import Bot
 from aiogram import types
@@ -13,7 +12,6 @@ from aiogram.utils import executor
 from db import DB
 from bot_db import BotDB
 
-import os
 
 import json
 
@@ -69,7 +67,7 @@ async def cmd_start(message: types.Message):
 @dp.message_handler(commands=["task"])
 async def task_handler(message: types.Message):
     user_id = message.from_user.id
-    send_task(user_id)
+    await send_task(user_id)
 
 
 @dp.message_handler(commands=['top'])
