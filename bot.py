@@ -12,6 +12,7 @@ from aiogram.utils import executor
 from db import DB
 from bot_db import BotDB
 
+from pymysql.err import *
 
 import json
 
@@ -24,8 +25,6 @@ log = logging.getLogger('broadcast')
 bot = Bot(token=token, parse_mode=types.ParseMode.MARKDOWN)
 dp = Dispatcher(bot)
 
-
-# TODO На все комады ограничение что нельзя выполнять их при нулевом статусе
 
 async def send_message(user_id: int, text: str, disable_notification: bool = False) -> bool:
     """
@@ -61,8 +60,10 @@ async def send_message(user_id: int, text: str, disable_notification: bool = Fal
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     await send_message(user_id=user_id, text="Тренировка по задачам ЕГЭ. Отправь свой ник что бы зарегестрироваться")
-    bot_db.add_user(user_id=user_id)
-
+    try:
+        bot_db.add_user(user_id=user_id)
+    except IntegrityError:
+        log.error(f"Target [ID: {user_id}]: Duplicate entry user_id. User wants to register twice.")
 
 @dp.message_handler(commands=["task"])
 async def task_handler(message: types.Message):
