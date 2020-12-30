@@ -130,11 +130,10 @@ async def user_get_text_handler(message: types.Message):
                                         \n {task_data['solution']}.""")
 
     # Теперь нужно сгенерировать и отправить ползователю новую задачу
-    send_task(user_id)
+    await send_task(user_id)
 
 
-
-def send_task(user_id):
+async def send_task(user_id):
     solved_problems = bot_db.get_user_data(user_id)["solved_problems"]
     if solved_problems != "":
         not_valid_tasks = json.loads(solved_problems)
