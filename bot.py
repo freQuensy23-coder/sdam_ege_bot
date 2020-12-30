@@ -16,6 +16,8 @@ from pymysql.err import *
 
 import json
 
+from random import choice
+
 from config import token
 
 
@@ -67,6 +69,7 @@ async def cmd_start(message: types.Message):
         log.error(f"Target [ID: {user_id}]: Duplicate entry user_id. User wants to register twice.")
         await send_message(user_id=user_id,
                            text="Вы уже зарегестрированы. Напишите /task что бы получить задачу.")
+
 
 @dp.message_handler(commands=["task"])
 async def task_handler(message: types.Message):
@@ -150,7 +153,7 @@ async def send_task(user_id):
     else:
         not_valid_tasks = []
 
-    task = db.get_task(not_valid_task=not_valid_tasks, num = 1)
+    task = db.get_task(not_valid_task=not_valid_tasks, num = choice([1, 4]))
     bot_db.set_current_problem(user_id=user_id, current_task_id=task["task_id"]) # TODO Send photos
     log.info(f"User [ID:{user_id}]: get task {task}")
     await send_message(user_id=user_id, text=task["text"])
