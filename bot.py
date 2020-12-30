@@ -28,7 +28,6 @@ dp = Dispatcher(bot)
 
 
 # TODO На все комады ограничение что нельзя выполнять их при нулевом статусе
-# TODO Авто получение след задачи
 
 async def send_message(user_id: int, text: str, disable_notification: bool = False) -> bool:
     """
@@ -70,20 +69,11 @@ async def cmd_start(message: types.Message):
 @dp.message_handler(commands=["task"])
 async def task_handler(message: types.Message):
     user_id = message.from_user.id
-    solved_problems = bot_db.get_user_data(user_id)["solved_problems"]
-    if solved_problems != "":
-        not_valid_tasks = json.loads(solved_problems)
-    else:
-        not_valid_tasks = []
-
-    task = db.get_task(not_valid_task=not_valid_tasks, num = 1)
-    bot_db.set_current_problem(user_id=user_id, current_task_id=task["task_id"]) # TODO Send photos
-    log.info(f"User [ID:{user_id}]: get task {task}") # TODO is task normally parsed
-    await send_message(user_id=user_id, text=task["text"])  # TODO
+    send_task(user_id)
 
 
 @dp.message_handler(commands=['top'])
-async def cmd_start(message: types.Message):
+async def get_top_users(message: types.Message):
     user_id = message.from_user.id
     tops = bot_db.get_top_users()
     m_text = "Топ пользователей"
@@ -93,7 +83,7 @@ async def cmd_start(message: types.Message):
 
 
 @dp.message_handler(commands=['delme'])
-async def cmd_start(message: types.Message):
+async def del_user(message: types.Message):
     """Удалить информацию о пользователе по закону о ПД."""
     user_id = message.from_user.id
     log.info(f"Target [ID:{user_id}]: try to delete his personal info")
@@ -121,6 +111,7 @@ async def user_get_text_handler(message: types.Message):
                                 "сообщением. Символом разделения дробной и целой части является запятая."
                                 "Что бы узнать топ пользователей напиши /top")
     elif user_data["status"] == 1:
+        # В случае если этот текст нужно воспринимать как ответ на задачу
         task_data = db.get_task_data(task_id=user_data["current_problem_id"])
         right_ans = str(task_data["answer"]).strip().replace(" ", "").replace("Примечание", "").replace("Приведем", "").replace("Напомним,", "").replace("Аналоги", "").replace("Иногда", "").replace("Классификатор", "").replace("Источник:", "")
         if message.text == right_ans:
@@ -137,6 +128,24 @@ async def user_get_text_handler(message: types.Message):
             await send_message(user_id=user_id,
                                text=f"""Вы ответили неправильно. Ваш счёт {score}. Ссылка на эту задачу: {link}.
                                         \n {task_data['solution']}.""")
+
+    # Теперь нужно сгенерировать и отправить ползователю новую задачу
+    send_task(user_id)
+
+
+
+def send_task(user_id):
+    solved_problems = bot_db.get_user_data(user_id)["solved_problems"]
+    if solved_problems != "":
+        not_valid_tasks = json.loads(solved_problems)
+    else:
+        not_valid_tasks = []
+
+    task = db.get_task(not_valid_task=not_valid_tasks, num = 1)
+    bot_db.set_current_problem(user_id=user_id, current_task_id=task["task_id"]) # TODO Send photos
+    log.info(f"User [ID:{user_id}]: get task {task}")
+    await send_message(user_id=user_id, text=task["text"])
+
 
 if __name__ == '__main__':
     bot_db = BotDB()
