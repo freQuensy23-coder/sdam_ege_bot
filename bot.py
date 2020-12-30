@@ -59,11 +59,14 @@ async def send_message(user_id: int, text: str, disable_notification: bool = Fal
 @dp.message_handler(commands=['start'])
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
-    await send_message(user_id=user_id, text="Тренировка по задачам ЕГЭ. Отправь свой ник что бы зарегестрироваться")
     try:
         bot_db.add_user(user_id=user_id)
+        await send_message(user_id=user_id,
+                           text="Тренировка по задачам ЕГЭ. Отправь свой ник что бы зарегестрироваться")
     except IntegrityError:
         log.error(f"Target [ID: {user_id}]: Duplicate entry user_id. User wants to register twice.")
+        await send_message(user_id=user_id,
+                           text="Вы уже зарегестрированы. Напишите /task что бы получить задачу.")
 
 @dp.message_handler(commands=["task"])
 async def task_handler(message: types.Message):
