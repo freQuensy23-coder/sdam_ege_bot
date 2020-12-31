@@ -57,6 +57,7 @@ class BotDB:
         self.cursor.execute(q)
         self.change_user_status(user_id=user_id, new_status=1)
         self.connection.commit()
+        log.info(f"User [ID: {user_id}]: change name")
 
     def add_new_solved_problem(self, user_id, task_id, cost=1):
         """Cost - how mach point should we pay for this problem"""

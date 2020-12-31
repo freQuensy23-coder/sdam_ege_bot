@@ -27,6 +27,8 @@ log = logging.getLogger('broadcast')
 bot = Bot(token=token, parse_mode=types.ParseMode.MARKDOWN)
 dp = Dispatcher(bot)
 
+link_to_task_id = "https://ege.sdamgia.ru/problem?id="
+
 
 async def send_message(user_id: int, text: str, disable_notification: bool = False) -> bool:
     """
@@ -35,8 +37,6 @@ async def send_message(user_id: int, text: str, disable_notification: bool = Fal
     :param text:
     :param disable_notification:
     :return:
-
-
     """
     try:
         await bot.send_message(user_id, text, disable_notification=disable_notification)
@@ -127,17 +127,17 @@ async def user_get_text_handler(message: types.Message):
         # В случае если этот текст нужно воспринимать как ответ на задачу
         task_data = db.get_task_data(task_id=user_data["current_problem_id"])
         right_ans = str(task_data["answer"]).strip().replace(" ", "").replace("Примечание", "").replace("Приведем", "").replace("Напомним,", "").replace("Аналоги", "").replace("Иногда", "").replace("Классификатор", "").replace("Источник:", "")
+        link = link_to_task_id + str(task_data["task_id"])
         if message.text == right_ans:
             # В случае если пользователь ответил правильно
             score = bot_db.add_new_solved_problem(user_id=user_id, task_id=task_data["task_id"])
-            link = task_data["task_id"] # TODO Add link generation
+
             await send_message(user_id=user_id,
                                text=f"""Вы ответили правильно. Ваш счёт {score}. Ссылка на эту задачу: {link}.
                                         \n {task_data['solution']}.""")
         else:
             # В случае если пользователь ответил не правильно
             score = bot_db.add_new_wrong_solved_problem(user_id=user_id, task_id=task_data["task_id"])
-            link = task_data["task_id"]  # TODO Add link generation
             await send_message(user_id=user_id,
                                text=f"""Вы ответили неправильно. Ваш счёт {score}. Ссылка на эту задачу: {link}.
                                         \n {task_data['solution']}.""")
