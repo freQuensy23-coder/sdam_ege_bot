@@ -1,6 +1,9 @@
 import pymysql
 from pymysql.cursors import DictCursor
 import config
+import logging
+
+log = logging.getLogger("db")
 
 
 class DB:
@@ -17,9 +20,10 @@ class DB:
         timeout = 2147482
         self.cursor.execute(query=f"""SET SESSION wait_timeout := {timeout};""")
         self.connection.commit()
-        # TODO Add logging
+        log.debug("db inited")
 
     def get_all_tasks(self):
+        log.debug("Get all task")
         query = """SELECT * FROM Tasks_math"""
         self.cursor.execute(query)
         task_ids = (self.cursor.fetchall())
@@ -30,10 +34,12 @@ class DB:
         INSERT INTO Tasks_math VALUES (task_id, text, answer, solution, images_taks, images_solution, task_num, Ok)    
         {task_id}, '{text}', '{answer}', '{solution}', '{repr(images_tasks)}', '{repr(images_solution)}', {task_num}, {ok}         
         """
+        log.info(f"Add task with task_id={task_id}, text='{text}', answer='{answer}', solution='{solution}',"
+                 f" images_task='{repr(images_tasks)}', images_solution='{repr(images_solution)}', num={task_num}, ok={ok}")
         self.cursor.execute(query)
         self.connection.commit()
 
-    def update_task(self, task_id,  text, answer, solution, images_tasks, images_solution, task_num, ok):
+    def update_task(self, task_id, text, answer, solution, images_tasks, images_solution, task_num, ok):
         query = f"""
         UPDATE Tasks_math 
         SET text = '{text}',
@@ -45,6 +51,9 @@ class DB:
             ok = {int(ok)}
         WHERE task_id = {task_id}
         """
+        log.info(f"Task with task_id={task_id} updated. text = '{text}', answer = '{answer}',solution = '{solution}'," +
+                 f'images_task = "{repr(images_tasks)}'
+                 + f'images_solution = "{repr(images_solution)}",task_number = {task_num},ok = {int(ok)}')
         self.cursor.execute(query)
         self.connection.commit()
 
@@ -64,7 +73,9 @@ class DB:
             """
         cur = self.connection.cursor()
         cur.execute(q)
-        return cur.fetchone()
+        task_data = cur.fetchone()
+        log.debug(f"Get task with task+data = {task_data}")
+        return task_data
 
     def get_task_data(self, task_id: int) -> dict:
         """Get all data from 1 task.
@@ -84,4 +95,6 @@ class DB:
         """
         cur = self.connection.cursor()
         cur.execute(q)
-        return cur.fetchone()
+        task_data  = cur.fetchone
+        log.debug(f"Get task data. Id = {task_id},  task+data = {task_data}")
+        return task_data

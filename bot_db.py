@@ -27,7 +27,7 @@ class BotDB:
         timeout = 2147482
         self.cursor.execute(query=f"""SET SESSION wait_timeout := {timeout};""")
         self.connection.commit()
-        # TODO Add logging
+        log.debug("bot_db inited")
 
     def add_user(self, user_id):
         q = f"""
@@ -81,9 +81,10 @@ class BotDB:
                         """
         cur.execute(add_point_q)
         self.connection.commit()
+        log.info(f"User [ID: {user_id}] add new solved problem: {task_id} with cost={cost}")
         return score + cost
 
-    def add_new_wrong_solved_problem(self, user_id, task_id, cost = 0):
+    def add_new_wrong_solved_problem(self, user_id, task_id, cost=0):
         cur = self.connection.cursor()
 
         # At first get unsolved problems array
@@ -100,6 +101,7 @@ class BotDB:
         add_w_solved_query = f"""UPDATE users SET score = {score + cost}, wrong_solved = '{wrong_solved}'"""
         cur.execute(add_w_solved_query)
         self.connection.commit()
+        log.info(f"User [ID: {user_id}] add new WRONG solved problem: {task_id} with cost={cost}")
         return score + cost
 
     def set_current_problem(self, user_id: int, current_task_id: int):
@@ -110,8 +112,9 @@ class BotDB:
         """
         self.cursor.execute(q)
         self.connection.commit()
+        log.debug(f"User [ID: {user_id}] Change current problem to {current_task_id}")
 
-    def get_top_users(self):
+    def get_top_users(self) -> dict:
         q = f"""
                 SELECT * from users
                 WHERE status != 0
@@ -120,16 +123,20 @@ class BotDB:
             """
         cur = self.connection.cursor()
         cur.execute(query=q)
-        return cur.fetchall()
+        top_users = cur.fetchall()
+        log.debug(f"Get top 15 user from db. They are: {top_users}")
+        return top_users
 
-    def get_user_data(self, user_id):
+    def get_user_data(self, user_id) -> dict:
         q = f"""
                 SELECT * FROM users
                 WHERE user_id = {user_id}
             """
         cur = self.connection.cursor()
         cur.execute(q)
-        return cur.fetchone()
+        user_data = cur.fetchone()
+        log.debug(f"Get [ID: {user_id}] user data: {user_data}")
+        return user_data
 
     def delete_user(self, user_id):
         q = f"""DELETE from users
@@ -137,12 +144,15 @@ class BotDB:
             """
         self.cursor.execute(q)
         self.connection.commit()
+        log.info(f"Delete user [ID: {user_id}]")
 
     def get_user_score_solved_problems(self, user_id):
+        """Функция получает очки и список решенных задач у пользователя user_id. Возвращяет неименованный кортеж"""
         cur = self.connection.cursor()
         q = f"""SELECT solved_problems, score FROM users WHERE user_id = {user_id}"""
         cur.execute(q)
         data = cur.fetchone()
         solved_problems = data["solved_problems"]
         score = data["score"]
-        return score, solved_problems
+        log.debug(f"Get user [ID: {user_id}] score and solved problems: {score, solved_problems}")
+        return score, solved_problems  # TODO Use namedtuple
